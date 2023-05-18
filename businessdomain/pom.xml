@@ -22,7 +22,7 @@
     <properties>
         <spring-cloud-dependencies.version>2021.0.4</spring-cloud-dependencies.version>
         <org.mapstruct.version>1.5.3.Final</org.mapstruct.version>
-        <org.lombo.version>1.18.24</org.lombo.version>
+        <org.lombok.version>1.18.24</org.lombok.version>
     </properties>
 
     <dependencyManagement>
@@ -93,7 +93,7 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
-            <version>${org.lombo.version}</version>
+            <version>${org.lombok.version}</version>
         </dependency>
 
         <!-- mapper beans -->

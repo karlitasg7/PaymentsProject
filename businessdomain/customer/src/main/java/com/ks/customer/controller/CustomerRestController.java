@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/customer")
@@ -15,19 +16,20 @@ public class CustomerRestController {
     @Autowired
     CustomerRepository customerRepository;
 
-    @GetMapping()
+    @GetMapping
     public List<Customer> findAll() {
         return customerRepository.findAll();
     }
 
     @GetMapping("/{id}")
-    public Customer get(@PathVariable String id) {
-        return null;
+    public Customer get(@PathVariable Long id) {
+        return customerRepository.findById(id).get();
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> put(@PathVariable String id, @RequestBody Customer input) {
-        return null;
+    public ResponseEntity<Customer> put(@PathVariable Long id, @RequestBody Customer input) {
+        Customer customer = customerRepository.save(input);
+        return ResponseEntity.ok(customer);
     }
 
     @PostMapping
@@ -39,8 +41,14 @@ public class CustomerRestController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Customer> delete(@PathVariable String id) {
-        return null;
+    public ResponseEntity<Customer> delete(@PathVariable Long id) {
+        Optional<Customer> customer = customerRepository.findById(id);
+
+        if (customer.isPresent()) {
+            customerRepository.delete(customer.get());
+        }
+
+        return ResponseEntity.ok().build();
     }
 
 }

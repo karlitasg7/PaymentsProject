@@ -7,27 +7,29 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/customer")
+@RequestMapping("/product")
 public class ProductRestController {
 
     @Autowired
     ProductRepository productRepository;
 
-    @GetMapping()
+    @GetMapping
     public List<Product> findAll() {
         return productRepository.findAll();
     }
 
     @GetMapping("/{id}")
-    public Product get(@PathVariable String id) {
-        return null;
+    public Product get(@PathVariable Long id) {
+        return productRepository.findById(id).get();
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> put(@PathVariable String id, @RequestBody Product input) {
-        return null;
+    public ResponseEntity<Product> put(@PathVariable Long id, @RequestBody Product input) {
+        Product product = productRepository.save(input);
+        return ResponseEntity.ok(product);
     }
 
     @PostMapping
@@ -39,8 +41,14 @@ public class ProductRestController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Product> delete(@PathVariable String id) {
-        return null;
+    public ResponseEntity<Product> delete(@PathVariable Long id) {
+        Optional<Product> product = productRepository.findById(id);
+
+        if (product.isPresent()) {
+            productRepository.delete(product.get());
+        }
+
+        return ResponseEntity.ok().build();
     }
 
 }
