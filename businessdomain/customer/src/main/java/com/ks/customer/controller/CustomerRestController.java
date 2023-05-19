@@ -23,17 +23,38 @@ public class CustomerRestController {
 
     @GetMapping("/{id}")
     public Customer get(@PathVariable Long id) {
-        return customerRepository.findById(id).get();
+        return customerRepository.findById(id).orElse(null);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Customer> put(@PathVariable Long id, @RequestBody Customer input) {
-        Customer customer = customerRepository.save(input);
-        return ResponseEntity.ok(customer);
+
+        Optional<Customer> customer = customerRepository.findById(id);
+
+        if (customer.isPresent()) {
+
+            Customer existingCustomer = customer.get();
+
+            existingCustomer.setCode(input.getCode());
+            existingCustomer.setName(input.getName());
+            existingCustomer.setIban(input.getIban());
+            existingCustomer.setPhone(input.getPhone());
+            existingCustomer.setSurname(input.getSurname());
+            existingCustomer.setAddress(input.getAddress());
+
+            input.getProducts().forEach(x -> x.setCustomer(existingCustomer));
+            existingCustomer.setProducts(input.getProducts());
+
+            customerRepository.save(existingCustomer);
+        }
+
+        return ResponseEntity.ok(customer.orElse(null));
     }
 
     @PostMapping
     public ResponseEntity<Customer> post(@RequestBody Customer input) {
+
+        input.getProducts().forEach(x -> x.setCustomer(input));
 
         Customer newCustomer = customerRepository.save(input);
 
@@ -44,9 +65,7 @@ public class CustomerRestController {
     public ResponseEntity<Customer> delete(@PathVariable Long id) {
         Optional<Customer> customer = customerRepository.findById(id);
 
-        if (customer.isPresent()) {
-            customerRepository.delete(customer.get());
-        }
+        customer.ifPresent(value -> customerRepository.delete(value));
 
         return ResponseEntity.ok().build();
     }
