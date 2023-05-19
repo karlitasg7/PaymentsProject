@@ -61,6 +61,22 @@ public class CustomerRestController {
         return jsonNode.get("name").asText();
     }
 
+    private List<?> getTransactions(String iban) {
+        WebClient build = webClientBuilder.clientConnector(new ReactorClientHttpConnector(httpClient))
+                .baseUrl("http://localhost:8082/transaction")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+
+        return build.method(HttpMethod.GET).uri(uriBuilder -> uriBuilder
+                        .path("/customer/transactions")
+                        .queryParam("ibanAccount", iban)
+                        .build())
+                .retrieve()
+                .bodyToFlux(Object.class)
+                .collectList()
+                .block();
+    }
+
     @GetMapping
     public List<Customer> findAll() {
         return customerRepository.findAll();
@@ -81,6 +97,9 @@ public class CustomerRestController {
                     String productName = getProductName(product.getProductId());
                     product.setProductName(productName);
                 });
+
+        List<?> transactions = getTransactions(customer.getIban());
+        customer.setTransactions(transactions);
 
         return customer;
     }
