@@ -1,13 +1,27 @@
 package com.ks.customer.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.ks.customer.entities.Customer;
 import com.ks.customer.repository.CustomerRepository;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.epoll.EpollChannelOption;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 
+import java.time.Duration;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/customer")
@@ -15,6 +29,37 @@ public class CustomerRestController {
 
     @Autowired
     CustomerRepository customerRepository;
+
+    private final WebClient.Builder webClientBuilder;
+
+    public CustomerRestController(WebClient.Builder webClientBuilder) {
+        this.webClientBuilder = webClientBuilder;
+    }
+
+    HttpClient httpClient = HttpClient.create()
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+            .option(ChannelOption.SO_KEEPALIVE, true)
+            .option(EpollChannelOption.TCP_KEEPIDLE, 300)
+            .option(EpollChannelOption.TCP_KEEPINTVL, 60)
+            .responseTimeout(Duration.ofSeconds(1))
+            .doOnConnected(connection -> {
+                connection.addHandlerLast(new ReadTimeoutHandler(5000, TimeUnit.MILLISECONDS));
+                connection.addHandlerLast(new WriteTimeoutHandler(5000, TimeUnit.MILLISECONDS));
+            });
+
+    private String getProductName(long id) {
+        WebClient webClient = webClientBuilder.clientConnector(new ReactorClientHttpConnector(httpClient))
+                .baseUrl("http://localhost:8083/product")
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultUriVariables(Collections.singletonMap("url", "http://localhost:8083/product"))
+                .build();
+
+        JsonNode jsonNode = webClient.method(HttpMethod.GET).uri("/" + id)
+                .retrieve()
+                .bodyToMono(JsonNode.class)
+                .block();
+        return jsonNode.get("name").asText();
+    }
 
     @GetMapping
     public List<Customer> findAll() {
@@ -24,6 +69,20 @@ public class CustomerRestController {
     @GetMapping("/{id}")
     public Customer get(@PathVariable Long id) {
         return customerRepository.findById(id).orElse(null);
+    }
+
+    @GetMapping("/full")
+    public Customer getByCode(@RequestParam String code) {
+        Customer customer = customerRepository.findByCode(code);
+
+        customer
+                .getProducts()
+                .forEach(product -> {
+                    String productName = getProductName(product.getProductId());
+                    product.setProductName(productName);
+                });
+
+        return customer;
     }
 
     @PutMapping("/{id}")
