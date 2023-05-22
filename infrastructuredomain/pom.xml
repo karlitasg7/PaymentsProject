@@ -17,6 +17,10 @@
         <spring-cloud-dependencies.version>2021.0.4</spring-cloud-dependencies.version>
     </properties>
 
+    <modules>
+        <module>eurekaserver</module>
+    </modules>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
