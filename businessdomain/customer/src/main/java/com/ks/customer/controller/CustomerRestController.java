@@ -1,24 +1,17 @@
 package com.ks.customer.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import com.ks.customer.business.transactions.BussinesTransaction;
 import com.ks.customer.entities.Customer;
+import com.ks.customer.exception.BussinesRuleException;
 import com.ks.customer.repository.CustomerRepository;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.epoll.EpollChannelOption;
-import io.netty.handler.timeout.ReadTimeoutHandler;
-import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.netty.http.client.HttpClient;
 
-import java.time.Duration;
-import java.util.Collections;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/customer")
@@ -27,52 +20,8 @@ public class CustomerRestController {
     @Autowired
     CustomerRepository customerRepository;
 
-    private final WebClient.Builder webClientBuilder;
-
-    public CustomerRestController(WebClient.Builder webClientBuilder) {
-        this.webClientBuilder = webClientBuilder;
-    }
-
-    HttpClient httpClient = HttpClient.create()
-            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
-            .option(ChannelOption.SO_KEEPALIVE, true)
-            .option(EpollChannelOption.TCP_KEEPIDLE, 300)
-            .option(EpollChannelOption.TCP_KEEPINTVL, 60)
-            .responseTimeout(Duration.ofSeconds(1))
-            .doOnConnected(connection -> {
-                connection.addHandlerLast(new ReadTimeoutHandler(5000, TimeUnit.MILLISECONDS));
-                connection.addHandlerLast(new WriteTimeoutHandler(5000, TimeUnit.MILLISECONDS));
-            });
-
-    private String getProductName(long id) {
-        WebClient webClient = webClientBuilder.clientConnector(new ReactorClientHttpConnector(httpClient))
-                .baseUrl("http://businessdomain-product/product")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .defaultUriVariables(Collections.singletonMap("url", "http://localhost:8083/product"))
-                .build();
-
-        JsonNode jsonNode = webClient.method(HttpMethod.GET).uri("/" + id)
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .block();
-        return jsonNode.get("name").asText();
-    }
-
-    private List<?> getTransactions(String iban) {
-        WebClient build = webClientBuilder.clientConnector(new ReactorClientHttpConnector(httpClient))
-                .baseUrl("http://businessdomain-transactions/transaction")
-                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .build();
-
-        return build.method(HttpMethod.GET).uri(uriBuilder -> uriBuilder
-                        .path("/customer/transactions")
-                        .queryParam("ibanAccount", iban)
-                        .build())
-                .retrieve()
-                .bodyToFlux(Object.class)
-                .collectList()
-                .block();
-    }
+    @Autowired
+    BussinesTransaction bussinesTransaction;
 
     @GetMapping
     public ResponseEntity<List<Customer>> findAll() {
@@ -94,19 +43,7 @@ public class CustomerRestController {
 
     @GetMapping("/full")
     public Customer getByCode(@RequestParam String code) {
-        Customer customer = customerRepository.findByCode(code);
-
-        customer
-                .getProducts()
-                .forEach(product -> {
-                    String productName = getProductName(product.getProductId());
-                    product.setProductName(productName);
-                });
-
-        List<?> transactions = getTransactions(customer.getIban());
-        customer.setTransactions(transactions);
-
-        return customer;
+        return bussinesTransaction.get(code);
     }
 
     @PutMapping("/{id}")
@@ -135,13 +72,9 @@ public class CustomerRestController {
     }
 
     @PostMapping
-    public ResponseEntity<Customer> post(@RequestBody Customer input) {
-
-        input.getProducts().forEach(x -> x.setCustomer(input));
-
-        Customer newCustomer = customerRepository.save(input);
-
-        return new ResponseEntity<>(newCustomer, HttpStatus.CREATED);
+    public ResponseEntity<Customer> post(@RequestBody Customer input) throws UnknownHostException, BussinesRuleException {
+        Customer save = bussinesTransaction.save(input);
+        return new ResponseEntity<>(save, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{id}")
