@@ -8,10 +8,7 @@ import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -78,13 +75,21 @@ public class CustomerRestController {
     }
 
     @GetMapping
-    public List<Customer> findAll() {
-        return customerRepository.findAll();
+    public ResponseEntity<List<Customer>> findAll() {
+        List<Customer> customerList = customerRepository.findAll();
+
+        if (customerList.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        } else {
+            return ResponseEntity.ok(customerList);
+        }
     }
 
     @GetMapping("/{id}")
-    public Customer get(@PathVariable Long id) {
-        return customerRepository.findById(id).orElse(null);
+    public ResponseEntity<Customer> get(@PathVariable Long id) {
+        return customerRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/full")
@@ -136,7 +141,7 @@ public class CustomerRestController {
 
         Customer newCustomer = customerRepository.save(input);
 
-        return ResponseEntity.ok(newCustomer);
+        return new ResponseEntity<>(newCustomer, HttpStatus.CREATED);
     }
 
     @DeleteMapping("/{id}")
