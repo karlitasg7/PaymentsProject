@@ -4,15 +4,26 @@ import com.ks.customer.business.transactions.BussinesTransaction;
 import com.ks.customer.entities.Customer;
 import com.ks.customer.exception.BussinesRuleException;
 import com.ks.customer.repository.CustomerRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Optional;
 
+@Tag(name = "Customer API", description = "API to manage customer")
 @RestController
 @RequestMapping("/customer")
 public class CustomerRestController {
@@ -23,6 +34,7 @@ public class CustomerRestController {
     @Autowired
     BussinesTransaction bussinesTransaction;
 
+    @Operation(description = "return all customer", summary = "return 204 if no data found")
     @GetMapping
     public ResponseEntity<List<Customer>> findAll() {
         List<Customer> customerList = customerRepository.findAll();
