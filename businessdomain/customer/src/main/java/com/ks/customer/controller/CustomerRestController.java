@@ -1,6 +1,9 @@
 package com.ks.customer.controller;
 
 import com.ks.customer.business.transactions.BussinesTransaction;
+import com.ks.customer.common.CustomerRequestMapper;
+import com.ks.customer.common.CustomerResponseMapper;
+import com.ks.customer.dto.CustomerResponse;
 import com.ks.customer.entities.Customer;
 import com.ks.customer.exception.BussinesRuleException;
 import com.ks.customer.repository.CustomerRepository;
@@ -34,15 +37,21 @@ public class CustomerRestController {
     @Autowired
     BussinesTransaction bussinesTransaction;
 
+    @Autowired
+    CustomerRequestMapper customerRequestMapper;
+
+    @Autowired
+    CustomerResponseMapper customerResponseMapper;
+
     @Operation(description = "return all customer", summary = "return 204 if no data found")
     @GetMapping
-    public ResponseEntity<List<Customer>> findAll() {
+    public ResponseEntity<List<CustomerResponse>> findAll() {
         List<Customer> customerList = customerRepository.findAll();
 
         if (customerList.isEmpty()) {
             return ResponseEntity.noContent().build();
         } else {
-            return ResponseEntity.ok(customerList);
+            return ResponseEntity.ok(customerResponseMapper.fromList(customerList));
         }
     }
 
