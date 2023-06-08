@@ -4,7 +4,7 @@ services:
   #used for each service is its name: that’s why it’s possible to use eureka-discovery as the hostname.
   registry-discovery:
     container_name: id-eureka
-    image: paymentsproject/microservice-docker-eurekaserver:1.0.0-SNAPSHOT
+    image: paymentsproject/microservice-docker-eureka-server:1.0.0-SNAPSHOT
     ports:
       - 8761:8761
     environment:
@@ -21,7 +21,6 @@ services:
     volumes:
       #this it use because we are using a local github repository /host/path:/container/path use ./ for relative path
       - /media/karla/DATOS/Proyectos/Microservices/config-server-repo:/tmp/config-server-repo
-      #All projets will have a variable value  DEUREKA_SERVER this tell where find a registry-discovery server
     environment:
       - JAVA_OPTS=
         -Xms256M
@@ -40,7 +39,6 @@ services:
   administration:
     container_name: id-admin
     image: paymentsproject/microservice-docker-admin-server:1.0.0-SNAPSHOT
-    #All projets will have a variable value  DEUREKA_SERVER this tell where find a registry-discovery server
     environment:
       - JAVA_OPTS=
         -Xms256M
