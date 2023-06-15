@@ -19,16 +19,8 @@ public class AdminServerApplication {
     }
 
     @Configuration
-    public static class SecurityPermitAllConfig {// extends WebSecurityConfigurerAdapter {
+    public static class SecurityPermitAllConfig {
 
-        //        @Override
-//        protected void configure(HttpSecurity httpSecurity) throws Exception {
-//            httpSecurity.authorizeRequests()
-//                    .anyRequest().permitAll()
-//                    .and()
-//                    .csrf()
-//                    .disable();
-//        }
         @Bean
         protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
             return http
