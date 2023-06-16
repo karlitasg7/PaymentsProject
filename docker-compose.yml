@@ -51,6 +51,23 @@ services:
       - 8762:8762
 
   ##########################################################################
+  #api gateway service
+  ##########################################################################
+  apigateway:
+    container_name: id-apigateway
+    image: paymentsproject/microservice-docker-api-gateway:1.0.0-SNAPSHOT
+    environment:
+      - JAVA_OPTS=
+        -Xms256M
+        -Xmx256M
+        -DEUREKA_SERVER=http://registry-discovery:8761/eureka/
+      #-Dspring.cloud.config.server.native.searchLocations=/var/config-data
+    depends_on:
+      - registry-discovery
+    ports:
+      - 8080:8080
+
+  ##########################################################################
   #product service
   ##########################################################################
   product-catalog:
@@ -82,8 +99,6 @@ services:
     depends_on:
       - registry-discovery
       - configuration
-    ports:
-      - 8081:8081
 
   ##########################################################################
   #transaction service
