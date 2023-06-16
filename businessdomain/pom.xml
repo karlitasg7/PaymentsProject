@@ -23,7 +23,6 @@
     <properties>
         <spring-cloud-dependencies.version>2021.0.4</spring-cloud-dependencies.version>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
-        <org.lombok.version>1.18.26</org.lombok.version>
     </properties>
 
     <dependencyManagement>
@@ -102,13 +101,6 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
             <version>1.6.15</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <optional>true</optional>
-            <version>${org.lombok.version}</version>
         </dependency>
 
         <!-- mapper beans -->
