@@ -2,7 +2,6 @@ package com.ks.product.mapper;
 
 import com.ks.product.dto.ProductResponse;
 import com.ks.product.entities.Product;
-import org.mapstruct.InheritConfiguration;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -17,9 +16,6 @@ public interface ProductResponseMapper {
             @Mapping(source = "code", target = "code"),
             @Mapping(source = "name", target = "name")
     })
-    Product fromRequest(ProductResponse request);
-
-    @InheritConfiguration
     ProductResponse fromEntity(Product product);
 
     List<ProductResponse> fromList(List<Product> productList);
