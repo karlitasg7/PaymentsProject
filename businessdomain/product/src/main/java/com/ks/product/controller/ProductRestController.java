@@ -1,9 +1,12 @@
 package com.ks.product.controller;
 
+import com.ks.product.dto.ProductRequest;
+import com.ks.product.dto.ProductResponse;
 import com.ks.product.entities.Product;
+import com.ks.product.mapper.ProductRequestMapper;
+import com.ks.product.mapper.ProductResponseMapper;
 import com.ks.product.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,38 +18,43 @@ import java.util.Optional;
 public class ProductRestController {
 
     @Autowired
-    ProductRepository productRepository;
+    private ProductRepository productRepository;
 
-//    @Value("${spring.datasource.username}")
-//    private String test;
+    @Autowired
+    private ProductResponseMapper productResponseMapper;
+
+    @Autowired
+    private ProductRequestMapper productRequestMapper;
 
     @GetMapping
-    public List<Product> findAll() {
-//        System.out.println(test);
-        return productRepository.findAll();
+    public List<ProductResponse> findAll() {
+        return productResponseMapper.fromList(productRepository.findAll());
     }
 
     @GetMapping("/{id}")
-    public Product get(@PathVariable Long id) {
-        return productRepository.findById(id).get();
+    public ResponseEntity<ProductResponse> get(@PathVariable Long id) {
+        return productRepository
+                .findById(id)
+                .map(value -> ResponseEntity.ok(productResponseMapper.fromEntity(value)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Product> put(@PathVariable Long id, @RequestBody Product input) {
-        Product product = productRepository.save(input);
-        return ResponseEntity.ok(product);
+    public ResponseEntity<ProductResponse> put(@PathVariable Long id, @RequestBody ProductRequest input) {
+        Product product = productRepository.save(productRequestMapper.fromRequest(input));
+        return ResponseEntity.ok(productResponseMapper.fromEntity(product));
     }
 
     @PostMapping
-    public ResponseEntity<Product> post(@RequestBody Product input) {
+    public ResponseEntity<ProductResponse> post(@RequestBody ProductRequest input) {
 
-        Product newProduct = productRepository.save(input);
+        Product newProduct = productRepository.save(productRequestMapper.fromRequest(input));
 
-        return ResponseEntity.ok(newProduct);
+        return ResponseEntity.ok(productResponseMapper.fromEntity(newProduct));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Product> delete(@PathVariable Long id) {
+    public ResponseEntity<ProductResponse> delete(@PathVariable Long id) {
         Optional<Product> product = productRepository.findById(id);
 
         if (product.isPresent()) {
